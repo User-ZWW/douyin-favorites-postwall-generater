@@ -1,0 +1,291 @@
+/* =========================================
+   Hero Section - Douban/Cyberpunk Style
+   ========================================= */
+:root {
+    --accent-cyan: #00f3ff;
+    --accent-pink: #ff003c;
+    --accent-yellow: #fcee0a;
+}
+
+.hero-section {
+    position: relative;
+    width: 100%;
+    min-height: 420px;
+    background-color: #050510;
+    /* 默认背景，会被 JS覆盖 */
+    background-image: radial-gradient(circle at top, rgba(0, 243, 255, 0.15) 0%, transparent 70%);
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px 40px;
+    margin-bottom: 30px;
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    transition: background-image 0.5s ease;
+    text-align: center;
+}
+
+/* 遮罩层，确保在有背景图时文字依然清晰 */
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    max-width: 800px;
+}
+
+/* 头像：居中展示，带发光边框 */
+.hero-avatar-wrapper {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 3px solid var(--accent-cyan);
+    box-shadow: 0 0 20px var(--accent-cyan);
+    overflow: hidden;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+    background: #000;
+}
+
+body.edit-mode .hero-avatar-wrapper:hover {
+    transform: scale(1.1) rotate(5deg);
+    border-color: var(--accent-pink);
+    box-shadow: 0 0 25px var(--accent-pink);
+    cursor: pointer;
+}
+
+.hero-avatar-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-edit-hint {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    font-size: 12px;
+    padding: 4px 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+body.edit-mode .hero-avatar-wrapper:hover .avatar-edit-hint {
+    opacity: 1;
+}
+
+/* Subtitle 描述文字 */
+.section-desc {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.1rem;
+    color: var(--accent-pink);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 5px;
+    font-weight: 600;
+    text-shadow: 0 0 5px rgba(255, 0, 60, 0.5);
+    outline: none;
+    padding: 2px 8px;
+    transition: background 0.3s;
+}
+
+body.edit-mode .section-desc:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    cursor: text;
+}
+
+/* 核心数字计数器 - 现在在底部 */
+.hero-count {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 4rem !important;
+    /* 略微缩小以适应底部位置 */
+    font-weight: 900 !important;
+    line-height: 1;
+    color: var(--accent-cyan);
+    text-shadow: 0 0 15px rgba(0, 243, 255, 0.8);
+    margin: 15px 0 0;
+    position: relative;
+}
+
+.hero-count::after {
+    content: "个";
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.2rem;
+    color: #fff;
+    margin-left: 8px;
+    vertical-align: baseline;
+    font-weight: 400;
+}
+
+/* 标题：中等间距 */
+.hero-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 4px;
+    color: #fff;
+    text-transform: uppercase;
+    margin: 10px 0 5px;
+    position: relative;
+    display: inline-block;
+    outline: none;
+    transition: background 0.3s;
+}
+
+body.edit-mode .hero-title:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    cursor: text;
+}
+
+/* Glitch Animation */
+.glitch-text {
+    position: relative;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+}
+
+.glitch-text::before {
+    left: 2px;
+    text-shadow: -2px 0 var(--accent-pink);
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+
+.glitch-text::after {
+    left: -2px;
+    text-shadow: -2px 0 var(--accent-yellow);
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+    0% {
+        clip: rect(12px, 9999px, 81px, 0);
+    }
+
+    20% {
+        clip: rect(66px, 9999px, 2px, 0);
+    }
+
+    40% {
+        clip: rect(98px, 9999px, 86px, 0);
+    }
+
+    60% {
+        clip: rect(10px, 9999px, 46px, 0);
+    }
+
+    80% {
+        clip: rect(48px, 9999px, 19px, 0);
+    }
+
+    100% {
+        clip: rect(82px, 9999px, 5px, 0);
+    }
+}
+
+@keyframes glitch-anim2 {
+    0% {
+        clip: rect(61px, 9999px, 52px, 0);
+    }
+
+    20% {
+        clip: rect(18px, 9999px, 95px, 0);
+    }
+
+    40% {
+        clip: rect(3px, 9999px, 34px, 0);
+    }
+
+    60% {
+        clip: rect(85px, 9999px, 28px, 0);
+    }
+
+    80% {
+        clip: rect(24px, 9999px, 4px, 0);
+    }
+
+    100% {
+        clip: rect(91px, 9999px, 63px, 0);
+    }
+}
+
+/* 操作区域 */
+.hero-actions {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 12px;
+    z-index: 20;
+}
+
+/* 背景更换按钮 */
+.hero-bg-edit-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    color: var(--accent-cyan);
+    border: 1px solid var(--accent-cyan);
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: 'Orbitron', sans-serif;
+    cursor: pointer;
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
+}
+
+.hero-bg-edit-btn:hover {
+    background: var(--accent-cyan);
+    color: #000;
+    box-shadow: 0 0 15px var(--accent-cyan);
+}
+
+body.edit-mode .hero-bg-edit-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
