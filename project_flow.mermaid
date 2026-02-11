@@ -1,0 +1,117 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#00f3ff', 'edgeLabelBackground':'#1a1a25', 'tertiaryColor': '#2d2d3a'}}}%%
+graph TD
+    %% ==================== [样式定义] ====================
+    classDef backend fill:#003f5c,stroke:#00f3ff,stroke-width:2px,color:#fff;
+    classDef frontend fill:#2d2d3a,stroke:#ff003c,stroke-width:2px,color:#fff;
+    classDef storage fill:#ffb400,stroke:#none,color:#000;
+    classDef interact fill:#7b1fa2,stroke:#fff,stroke-width:1px,color:#fff;
+    classDef decision fill:#000,stroke:#00f3ff,stroke-width:2px,color:#fff;
+
+    %% ==================== [后端流程] ====================
+    subgraph Backend [🐍 Backend (run.py)]
+        direction TB
+        Start((🚀 Start)) --> CheckEnv[检查环境/依赖]
+        CheckEnv --> Login{需登录?}
+        Login -- Yes --> QR[扫码登录 (Playwright)]
+        QR --> Scrape[📜 滚动抓取收藏夹]
+        Login -- No --> Scrape
+        Scrape --> Extract[提取元数据\n(ID/Title/CoverURL)]
+        Extract --> Download[⬇️ 异步并发下载封面]
+        Download --> SaveMeta{保存数据}
+        SaveMeta --> Server[启动 HTTP Server\nPort 5000]
+        
+        %% 后端 API 服务
+        Server --> API_Resolve[API: /api/resolve_video\n解析真实地址]
+        Server --> API_Proxy[API: /proxy_video\n流式代理视频/图片]
+        Server --> API_Save[API: /api/save_data\n覆写 metadata.json]
+    end
+
+    %% ==================== [前端初始化] ====================
+    subgraph Frontend_Init [🖥️ Frontend Initialization]
+        LoadPage(打开 index.html) --> LoadSettings[读取 LocalStorage 配置\n(布局/Hero/DarkMode)]
+        LoadSettings --> InitUI[初始化 AutoScroller\n初始化 Glitch 文字特效]
+        InitUI --> LoadData{有本地缓存?}
+        LoadData -- Yes -> RenderLocal[渲染 LocalStorage 数据]
+        LoadData -- No -> FetchServer[请求 data/metadata.json]
+        FetchServer --> RenderServer[渲染服务器数据]
+        
+        RenderLocal & RenderServer --> InitMasonry[📐 Masonry 瀑布流布局]
+        InitMasonry --> Observe[👁️ IntersectionObserver\n双向滚动动画]
+    end
+
+    StartBrowser[自动打开浏览器] --> LoadPage
+    Server --> StartBrowser
+
+    %% ==================== [主界面交互] ====================
+    subgraph Interaction [🎮 Main Interaction]
+        User((👤 User)) --> Action_Scroll[🖱️ 滚动页面]
+        Action_Scroll --> LazyLoad{触底?}
+        LazyLoad -- Yes -> BatchLoad[加载下一批 + 动画]
+        
+        User --> Action_Click[👆 点击海报]
+        Action_Click --> Lightbox[打开灯箱预览]
+        
+        Lightbox --> PlayVideo[▶️ 播放视频]
+        PlayVideo --> CallProxy[请求 /proxy_video\n(绕过防盗链/跨域)]
+        CallProxy -.-> API_Proxy
+
+        User --> Action_Add[➕ 添加视频]
+        Action_Add --> InputURL[输入分享链接]
+        InputURL --> CallResolve[请求 /api/resolve_video]
+        CallResolve -.-> API_Resolve
+        CallResolve --> UnshiftData[添加到列表首位]
+        UnshiftData --> AutoSave[💾 自动保存]
+    end
+
+    %% ==================== [编辑模式] ====================
+    subgraph EditMode [✏️ Edit Mode (Advanced)]
+        ToggleEdit[切换编辑模式] --> EnableDrag[启用拖拽排序 (Sortable)]
+        ToggleEdit --> EnableEdit[文字可编辑 (contentEditable)]
+        
+        User --> CustomizeHero[🎨 自定义 Hero]
+        CustomizeHero --> UI_ChangeAvatar[点击头像 -> 选择文件]
+        CustomizeHero --> UI_ChangeBg[点击背景 -> 选择文件]
+        UI_ChangeAvatar & UI_ChangeBg --> Compress[🖼️ 前端图片压缩]
+        Compress --> SaveSetting[保存 Base64 到配置]
+
+        User --> UI_CardEdit[编辑卡片]
+        UI_CardEdit --> LightboxEdit[灯箱编辑状态]
+        LightboxEdit --> EditTitle[修改标题 -> 自动保存]
+        LightboxEdit --> DeleteCard[🗑️ 删除卡片]
+        
+        LightboxEdit --> OpenFrameSelector[🎞️ 帧选择器]
+        
+        %% 帧选择器流程
+        OpenFrameSelector --> CheckRealURL{有真实MP4地址?}
+        CheckRealURL -- No -> ResolveURL[解析地址]
+        ResolveURL -.-> API_Resolve
+        CheckRealURL -- Yes -> LoadProxyVideo[加载代理视频]
+        LoadProxyVideo --> Seek[拖动进度条]
+        Seek --> Capture[📷 截图 (Canvas)]
+        Capture --> ApplyCover[应用为封面]
+        ApplyCover --> UpdateUI[局部刷新 DOM]
+        UpdateUI --> AutoSave
+    end
+
+    %% ==================== [数据持久化] ====================
+    subgraph Persistence [💾 Data Persistence]
+        AutoSave --> SaveLocal[写入 LocalStorage]
+        SaveLocal --> Debounce{防抖/退出编辑}
+        Debounce --> SyncServer[POST /api/save_data]
+        SyncServer -.-> API_Save
+        
+        User --> Export[📤 导出 JSON]
+        User --> Import[📥 导入 JSON]
+        Import --> SaveLocal
+    end
+
+    %% 跨模块连接
+    InitMasonry --> ToggleEdit
+    BatchLoad --> InitMasonry
+    Lightbox --> UI_CardEdit
+
+    %% 样式应用
+    class Start,CheckEnv,Scrape,Extract,Download,Server,API_Resolve,API_Proxy,API_Save backend;
+    class LoadPage,LoadSettings,InitUI,InitMasonry,Observe,LoadData frontend;
+    class SaveMeta,SaveLocal,SyncServer,Compress storage;
+    class User,Action_Scroll,Action_Click,Action_Add,ToggleEdit,CustomizeHero,UI_CardEdit,OpenFrameSelector interact;

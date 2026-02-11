@@ -1,0 +1,212 @@
+/* =========================================
+   Music Player Widget (Cyberpunk Style)
+   ========================================= */
+
+.music-player-container {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    z-index: 10000;
+    font-family: 'Rajdhani', sans-serif;
+    display: flex;
+    align-items: flex-end;
+    gap: 15px;
+}
+
+/* 迷你播放按钮 (折叠状态) */
+.music-toggle {
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid var(--neon-cyan);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+    transition: all 0.3s ease;
+    animation: neon-pulse 3s infinite;
+}
+
+.music-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
+}
+
+.music-toggle svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--neon-cyan);
+}
+
+.music-toggle.playing {
+    animation: spin 4s linear infinite, neon-pulse 2s infinite;
+    border-color: var(--neon-pink);
+}
+
+.music-toggle.playing svg {
+    fill: var(--neon-pink);
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 播放器面板 (展开状态) */
+.music-panel {
+    background: rgba(10, 10, 15, 0.95);
+    border: 1px solid var(--neon-cyan);
+    border-radius: 12px;
+    padding: 15px;
+    width: 260px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 243, 255, 0.1);
+    transform-origin: bottom left;
+    transform: scale(0);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: absolute;
+    bottom: 60px;
+    left: 0;
+}
+
+.music-panel.active {
+    transform: scale(1);
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* 歌曲信息 */
+.track-info {
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.track-name {
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 0 5px var(--neon-cyan);
+}
+
+.track-artist {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+}
+
+/* 进度条 */
+.progress-container {
+    background: rgba(255, 255, 255, 0.1);
+    height: 4px;
+    border-radius: 2px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: var(--neon-cyan);
+    height: 100%;
+    width: 0%;
+    border-radius: 2px;
+    box-shadow: 0 0 5px var(--neon-cyan);
+    transition: width 0.1s linear;
+}
+
+/* 控制按钮组 */
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.btn-control {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.2s;
+}
+
+.btn-control:hover {
+    color: var(--neon-cyan);
+    transform: scale(1.1);
+}
+
+.btn-play {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 243, 255, 0.1);
+    border: 1px solid var(--neon-cyan);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--neon-cyan);
+}
+
+.btn-play:hover {
+    background: var(--neon-cyan);
+    color: #000;
+    box-shadow: 0 0 15px var(--neon-cyan);
+}
+
+/* 播放列表选择器 */
+.playlist-selector {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 8px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+}
+
+.playlist-selector option {
+    background: #111;
+    color: #fff;
+}
+
+/* 音量控制 */
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.volume-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    outline: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--neon-cyan);
+    cursor: pointer;
+    box-shadow: 0 0 5px var(--neon-cyan);
+}

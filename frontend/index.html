@@ -26,9 +26,24 @@
     <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/hero.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/player.css">
 </head>
 
 <body>
+    <!-- 背景装饰层 -->
+    <div class="scanline-overlay"></div>
+    <div class="crt-lines"></div>
+    <div class="cyber-grid"></div>
+    <div class="particles-container">
+        <!-- 粒子将由 CSS 生成或 JS 动态添加，这里先放几个静态的用于演示 -->
+        <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 30%; animation-delay: 2s;"></div>
+        <div class="particle" style="left: 70%; animation-delay: 4s;"></div>
+        <div class="particle" style="left: 90%; animation-delay: 6s;"></div>
+        <div class="particle" style="left: 50%; animation-delay: 8s;"></div>
+    </div>
+
     <!-- 顶部导航 / Hero Section -->
     <header class="hero-section" id="hero-section">
         <div class="hero-actions">
@@ -210,6 +225,8 @@
         </svg>
     </button>
 
+    <!-- 音乐播放器脚本 -->
+    <script src="js/player.js"></script>
     <script src="js/app.js"></script>
 </body>
 

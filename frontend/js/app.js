@@ -96,12 +96,265 @@ const elements = {
 };
 
 // ========================================
+// 工具函数
+// ========================================
+function compressImage(base64, maxWidth = 1200, quality = 0.7) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.src = base64;
+        img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => resolve(base64); // 失败则返回原图
+    });
+}
+
+class HyperText {
+    constructor(element, text) {
+        this.element = element;
+        this.originalText = text;
+        this.letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@#$%^&*";
+        this.interval = null;
+        this.animate();
+    }
+
+    animate() {
+        let iteration = 0;
+        clearInterval(this.interval);
+
+        this.interval = setInterval(() => {
+            this.element.innerText = this.originalText
+                .split("")
+                .map((letter, index) => {
+                    if (index < iteration) {
+                        return this.originalText[index];
+                    }
+                    return this.letters[Math.floor(Math.random() * 26)];
+                })
+                .join("");
+
+            if (iteration >= this.originalText.length) {
+                clearInterval(this.interval);
+            }
+
+            iteration += 1 / 3;
+        }, 30);
+    }
+}
+
+class AutoScroller {
+    constructor() {
+        this.scrolling = false;
+        this.speed = 2; // 1-10
+        this.direction = 1; // 1: down, -1: up
+        this.rafId = null;
+        this.initUI();
+    }
+
+    initUI() {
+        const container = document.createElement('div');
+        container.className = 'auto-scroll-widget';
+        container.innerHTML = `
+            <div class="scroll-controls">
+                <button class="btn-scroll-toggle" id="scrollToggle" title="自动滚动">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+                </button>
+                <div class="scroll-settings">
+                    <div class="direction-switch">
+                        <button class="btn-dir active" data-dir="1" title="向下滚动">⬇</button>
+                        <button class="btn-dir" data-dir="-1" title="向上滚动">⬆</button>
+                    </div>
+                    <input type="range" class="speed-slider" min="1" max="20" value="2" title="滚动速度">
+                </div>
+            </div>
+        `;
+        document.body.appendChild(container);
+
+        // Styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .auto-scroll-widget {
+                position: fixed;
+                bottom: 120px;
+                right: 30px;
+                z-index: 999;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            .scroll-controls {
+                background: rgba(0, 0, 0, 0.8);
+                border: 1px solid var(--neon-cyan);
+                border-radius: 30px;
+                padding: 10px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+                backdrop-filter: blur(5px);
+                transition: all 0.3s;
+            }
+            .scroll-controls:hover .scroll-settings {
+                display: flex;
+                opacity: 1;
+                height: auto;
+            }
+            .scroll-settings {
+                display: none;
+                flex-direction: column;
+                gap: 8px;
+                opacity: 0;
+                height: 0;
+                transition: opacity 0.3s;
+                align-items: center;
+            }
+            .btn-scroll-toggle {
+                background: transparent;
+                border: none;
+                color: var(--neon-cyan);
+                cursor: pointer;
+                transition: transform 0.2s;
+            }
+            .btn-scroll-toggle:hover {
+                transform: scale(1.1);
+                text-shadow: 0 0 10px var(--neon-cyan);
+            }
+            .btn-scroll-toggle.active svg path {
+                d: path("M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z");
+                fill: var(--neon-pink);
+            }
+            .direction-switch {
+                display: flex;
+                gap: 5px;
+            }
+            .btn-dir {
+                background: rgba(255,255,255,0.1);
+                border: 1px solid transparent;
+                color: #888;
+                cursor: pointer;
+                border-radius: 4px;
+                padding: 2px 6px;
+                font-size: 12px;
+            }
+            .btn-dir.active {
+                color: var(--neon-cyan);
+                border-color: var(--neon-cyan);
+                background: rgba(0, 243, 255, 0.1);
+            }
+            .speed-slider {
+                width: 60px; /* 竖向用 transform 旋转或直接短一点 */
+                accent-color: var(--neon-cyan);
+                cursor: pointer;
+            }
+        `;
+        document.head.appendChild(style);
+
+        this.elements = {
+            toggle: container.querySelector('#scrollToggle'),
+            dirs: container.querySelectorAll('.btn-dir'),
+            slider: container.querySelector('.speed-slider')
+        };
+
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        this.elements.toggle.addEventListener('click', () => this.toggle());
+
+        this.elements.dirs.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.direction = parseInt(e.target.dataset.dir);
+                this.elements.dirs.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+            });
+        });
+
+        this.elements.slider.addEventListener('input', (e) => {
+            this.speed = parseInt(e.target.value);
+        });
+
+        // 阻止鼠标滚动
+        const preventScroll = (e) => {
+            if (this.scrolling) {
+                e.preventDefault();
+            }
+        };
+        // 现代浏览器需要设置 passive: false 才能 preventDefault
+        window.addEventListener('wheel', preventScroll, { passive: false });
+        window.addEventListener('touchmove', preventScroll, { passive: false });
+    }
+
+    toggle() {
+        this.scrolling = !this.scrolling;
+        this.elements.toggle.classList.toggle('active', !this.scrolling);
+        // Toggle icon visually
+        if (this.scrolling) {
+            this.elements.toggle.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="var(--neon-pink)" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+            document.body.style.overflow = 'hidden'; // 禁止手动滚动条
+            this.start();
+        } else {
+            this.elements.toggle.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>`;
+            document.body.style.overflow = ''; // 恢复滚动条
+            this.stop();
+        }
+    }
+
+    start() {
+        if (!this.scrolling) return;
+        window.scrollBy(0, this.speed * this.direction);
+
+        // 预加载优化：如果距离底部小于 2000px，提前加载下一批
+        if (this.direction > 0) {
+            const dist = document.body.scrollHeight - (window.scrollY + window.innerHeight);
+            if (dist < 2000) {
+                loadNextBatch();
+            }
+        }
+
+        // 边界检测
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight && this.direction > 0) {
+            // 强制加载尝试
+            loadNextBatch();
+        }
+        if (window.scrollY <= 0 && this.direction < 0) {
+            this.stop();
+            this.toggle();
+            return;
+        }
+
+        this.rafId = requestAnimationFrame(() => this.start());
+    }
+
+    stop() {
+        this.scrolling = false;
+        if (this.rafId) cancelAnimationFrame(this.rafId);
+    }
+}
+
+// ========================================
 // 初始化
 // ========================================
 async function init() {
     loadSettings();
     applySettings();
     loadHeroSettings();
+
+    // 初始化 AutoScroller
+    new AutoScroller();
 
     // 初始化 grid-sizer 用于 Masonry 自适应
     if (!elements.grid.querySelector('.grid-sizer')) {
@@ -113,6 +366,7 @@ async function init() {
 
     try {
         await loadMetadata();
+        initScrollObserver(); // 初始化滚动动画
         initMasonry();
         loadNextBatch();
     } catch (error) {
@@ -187,19 +441,23 @@ function loadSettings() {
     if (saved) {
         try {
             const loaded = JSON.parse(saved);
-            // 迁移旧设置：如果有 cardWidth 但没有 columns，转换为默认列数
+            // 迁移旧设置
             if (loaded.cardWidth && !loaded.columns) {
                 loaded.columns = 5;
                 delete loaded.cardWidth;
             }
-            // 确保 hero 结构存在
-            if (!loaded.hero) {
-                loaded.hero = { ...DEFAULT_SETTINGS.hero };
-            }
-            state.settings = { ...state.settings, ...loaded };
+
+            // 深度合并 Hero 设置，确保新字段不被覆盖，旧字段被保留
+            const mergedHero = { ...DEFAULT_SETTINGS.hero, ...(loaded.hero || {}) };
+
+            // 合并顶层设置
+            state.settings = { ...DEFAULT_SETTINGS, ...loaded, hero: mergedHero };
         } catch (e) {
             console.error('Settings parse error', e);
+            state.settings = { ...DEFAULT_SETTINGS };
         }
+    } else {
+        state.settings = { ...DEFAULT_SETTINGS };
     }
 
     // 设置默认值中的 hero 如果缺失
@@ -222,13 +480,21 @@ function loadSettings() {
 }
 
 function loadHeroSettings() {
+    // 应用文本特效
     if (elements.heroTitle) {
         elements.heroTitle.innerText = state.settings.hero.title;
         elements.heroTitle.dataset.text = state.settings.hero.title;
+        // 仅在非编辑模式下且首次加载时触发特效，避免每次 blur 都触发
+        if (!document.body.classList.contains('edit-mode')) {
+            new HyperText(elements.heroTitle, state.settings.hero.title);
+        }
     }
     if (elements.heroSubtitle) {
         elements.heroSubtitle.innerText = state.settings.hero.subtitle || 'DOUYIN WATCHED MEDIA LOG';
         elements.heroSubtitle.dataset.text = state.settings.hero.subtitle || 'DOUYIN WATCHED MEDIA LOG';
+        if (!document.body.classList.contains('edit-mode')) {
+            new HyperText(elements.heroSubtitle, elements.heroSubtitle.innerText);
+        }
     }
     if (elements.heroAvatar && state.settings.hero.avatar) {
         elements.heroAvatar.src = state.settings.hero.avatar;
@@ -237,7 +503,15 @@ function loadHeroSettings() {
 }
 
 function saveSettings() {
-    localStorage.setItem('posterwall_settings', JSON.stringify(state.settings));
+    try {
+        localStorage.setItem('posterwall_settings', JSON.stringify(state.settings));
+    } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+            alert('存储空间已满！背景图片可能过大，请尝试更换较小的图片。');
+        } else {
+            console.error('保存设置失败:', e);
+        }
+    }
 }
 
 function applySettings() {
@@ -297,6 +571,9 @@ function updateSettingLabels() {
 // ========================================
 // Masonry 初始化
 // ========================================
+// ========================================
+// Masonry 初始化
+// ========================================
 function initMasonry() {
     // 销毁旧实例
     if (state.masonryInstance) {
@@ -314,6 +591,63 @@ function initMasonry() {
 
     // 初始布局
     state.masonryInstance.layout();
+}
+
+// ========================================
+// 滚动动画 (Intersection Observer)
+// ========================================
+// ========================================
+// 滚动动画 (Intersection Observer) - 双向增强版
+// ========================================
+function initScrollObserver() {
+    const options = {
+        root: null,
+        rootMargin: '0px 0px -50px 0px',
+        threshold: 0.15
+    };
+
+    state.observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            // 获取元素
+            const target = entry.target;
+
+            // 判断是向上滚动还是向下滚动触发的显示
+            // boundingClientRect.y 在视口下方(>0)说明是向下滚动(内容上移)进入视口
+            // boundingClientRect.y 在视口上方(<0, 实际上很少见因为 rootMargin) 
+            // 更准确的是对比 entry.boundingClientRect.y 和 window.innerHeight
+
+            const isScrollUp = entry.boundingClientRect.y < 0;
+            // 注意：当元素从顶部进入时，y 应该是负数或接近0。但这取决于 rootMargin。
+            // 简单判断：如果 y 坐标小于视口高度的一半，且 isIntersecting，多半是从上面下来的
+
+            if (entry.isIntersecting) {
+                // 进入视口
+
+                // 判断进入方向：
+                // 如果 entry.boundingClientRect.top < 0，说明它是从上面进入的（即用户在向上滚动）
+                // 如果 entry.boundingClientRect.top > 0，说明它是从下面进入的（即用户在向下滚动）
+
+                if (entry.boundingClientRect.top < 0) {
+                    // 从上方进入 (Scroll Up) -> 放大并渐显
+                    target.classList.add('scroll-up');
+                    target.classList.remove('reveal-left', 'reveal-right'); // 清理其他可能的类
+                } else {
+                    // 从下方进入 (Scroll Down) -> 默认 Fade Up
+                    target.classList.remove('scroll-up');
+                }
+
+                // 强制重绘以触发动画
+                void target.offsetWidth;
+                target.classList.add('active');
+
+                // 不再取消观察，以支持反复动画
+                // observer.unobserve(entry.target); 
+            } else {
+                // 离开视口 -> 重置状态，以便下次进入时再次触发动画
+                target.classList.remove('active');
+            }
+        });
+    }, options);
 }
 
 // ========================================
@@ -335,6 +669,11 @@ function loadNextBatch() {
     batch.forEach((cover, idx) => {
         const item = createPosterCard(cover, startIndex + idx);
         fragment.appendChild(item);
+
+        // 注册观察者
+        if (state.observer) {
+            state.observer.observe(item);
+        }
     });
 
     elements.grid.appendChild(fragment);
@@ -365,7 +704,16 @@ function loadNextBatch() {
 // ========================================
 function createPosterCard(cover, index) {
     const item = document.createElement('div');
-    item.className = 'grid-item';
+    // 添加 reveal 类用于入场动画
+    item.className = 'grid-item reveal';
+    // 移除行内延迟，改为 CSS 类控制或仅首屏 JS 控制
+    // CSS 中已有 .stagger-x 类，这里随即分配一个 stagger 类给首屏元素
+    // 但为了滚动时也有错落感，我们可以给所有元素一个随机的微小延迟
+
+    // 随机分配 1-5 的 stagger 类
+    const staggerIndex = (index % 5) + 1;
+    item.classList.add(`stagger-${staggerIndex}`);
+
     item.dataset.index = index;
 
     const coverSrc = cover.local_cover
@@ -561,6 +909,29 @@ function setupEventListeners() {
             closeSettings();
         }
     });
+
+    // 灯箱标题编辑监听 (自动保存)
+    if (elements.lightboxTitle) {
+        elements.lightboxTitle.addEventListener('input', () => {
+            if (state.currentCard) {
+                const newTitle = elements.lightboxTitle.innerText;
+                state.currentCard.title = newTitle;
+                state.allCovers[state.currentCard.index].title = newTitle;
+
+                // 更新网格中的标题
+                const card = document.querySelector(`.poster-card[data-index="${state.currentCard.index}"]`);
+                if (card) {
+                    const titleEl = card.querySelector('.poster-title');
+                    if (titleEl) titleEl.innerText = newTitle;
+                }
+
+                state.hasLocalChanges = true;
+                // 防抖保存
+                if (state.saveTimer) clearTimeout(state.saveTimer);
+                state.saveTimer = setTimeout(saveToLocalStorage, 1000);
+            }
+        });
+    }
 
     // 初始化 Hero 区域交互（头像更换、标题编辑）
     setupHeroInteractions();
@@ -758,9 +1129,13 @@ function openLightbox(card) {
 
     const img = card.querySelector('.poster-image');
     elements.lightboxImg.src = img.src;
-    elements.lightboxTitle.textContent = cover.title || '无标题';
+    elements.lightboxTitle.innerText = cover.title || '无标题';
     elements.lightboxAuthor.textContent = state.settings.showAuthor ? `@${cover.author || '未知'}` : '';
     elements.lightboxLink.href = cover.video_url || '#';
+
+    // 检查是否在编辑模式
+    const isEditing = document.body.classList.contains('edit-mode');
+    if (elements.lightboxTitle) elements.lightboxTitle.contentEditable = isEditing;
 
     elements.lightbox.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -784,12 +1159,11 @@ function toggleEditMode() {
     const isEditing = document.body.classList.contains('edit-mode');
 
     // 切换 Header 可编辑状态
-    if (elements.heroTitle) {
-        elements.heroTitle.contentEditable = isEditing;
-    }
-    if (elements.heroSubtitle) {
-        elements.heroSubtitle.contentEditable = isEditing;
-    }
+    if (elements.heroTitle) elements.heroTitle.contentEditable = isEditing;
+    if (elements.heroSubtitle) elements.heroSubtitle.contentEditable = isEditing;
+
+    // 切换灯箱标题也可编辑
+    if (elements.lightboxTitle) elements.lightboxTitle.contentEditable = isEditing;
 
     if (elements.btnEditMode) {
         elements.btnEditMode.classList.toggle('active', isEditing);
@@ -859,8 +1233,10 @@ function setupHeroInteractions() {
             const file = this.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function (e) {
-                    const base64 = e.target.result;
+                reader.onload = async function (e) {
+                    let base64 = e.target.result;
+                    // 压缩头像
+                    base64 = await compressImage(base64, 300, 0.7);
                     state.settings.hero.avatar = base64;
                     if (elements.heroAvatar) elements.heroAvatar.src = base64;
                     saveSettings();
@@ -884,8 +1260,10 @@ function setupHeroInteractions() {
             const file = this.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function (e) {
-                    const base64 = e.target.result;
+                reader.onload = async function (e) {
+                    let base64 = e.target.result;
+                    // 压缩背景图
+                    base64 = await compressImage(base64, 1920, 0.6);
                     state.settings.hero.background = base64;
                     applyHeroBackground();
                     saveSettings();

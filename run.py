@@ -10,7 +10,11 @@ import webbrowser
 import subprocess
 from pathlib import Path
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
+import time
+import re
+
 
 # 项目路径
 PROJECT_DIR = Path(__file__).parent.resolve()
@@ -30,13 +34,15 @@ def check_dependencies():
         from playwright.async_api import async_playwright
         import aiohttp
         import aiofiles
+        import pyperclip
+        import pygetwindow as gw
         print("✅ 依赖检查通过")
         return True
     except ImportError as e:
         print(f"❌ 缺少依赖: {e}")
         print("🔧 正在安装依赖...")
         subprocess.run([sys.executable, "-m", "pip", "install", 
-                       "playwright", "aiohttp", "aiofiles", "-q"])
+                       "playwright", "aiohttp", "aiofiles", "pyperclip", "pygetwindow", "-q"])
         subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"])
         return True
 
@@ -577,5 +583,70 @@ async def main():
     start_server_and_open_browser()
 
 
+
+def monitor_clipboard():
+    """后台监控剪贴板，发现目标链接自动唤醒窗口"""
+    import pyperclip
+    import pygetwindow as gw
+    
+    print("📋 剪贴板监控已启动...")
+    last_text = ""
+    
+    # 正则规则
+    RULES = [
+        r"^https?://s\.myhkw\.cn/api\.php\?.*$",  # Shadow Moon API
+        r"^https?://.+\.(mp3|m4a|ogg|wav|aac)(\?.*)?$"  # Direct Audio
+    ]
+    
+    while True:
+        try:
+            text = pyperclip.paste().strip()
+            if text and text != last_text:
+                last_text = text
+                
+                # Check match
+                is_match = False
+                for rule in RULES:
+                    if re.match(rule, text, re.I):
+                        is_match = True
+                        break
+                
+                if is_match:
+                    print(f"\n[Clipboard] Captured: {text[:50]}...")
+                    # Find window
+                    target_title = "抖音收藏海报墙"
+                    windows = gw.getWindowsWithTitle(target_title)
+                    
+                    if windows:
+                        win = windows[0]
+                        if not win.isActive:
+                            print(f"[Focus] Bringing '{target_title}' to front...")
+                            try:
+                                if win.isMinimized:
+                                    win.restore()
+                                win.activate()
+                            except Exception as e:
+                                print(f"[Focus Error] {e}")
+                    else:
+                        print(f"[Focus Warning] Window '{target_title}' not found")
+                        
+            time.sleep(1)
+        except Exception as e:
+            print(f"[Clipboard Error] {e}")
+            time.sleep(2)
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    # Start clipboard monitor in background if dependencies are met
+    if check_dependencies():
+        try:
+            monitor_thread = Thread(target=monitor_clipboard, daemon=True)
+            monitor_thread.start()
+        except Exception as e:
+            print(f"❌ 无法启动剪贴板监控: {e}")
+
+    if len(sys.argv) > 1 and sys.argv[1] == "server":
+        print("🚀 仅启动服务器模式")
+        start_server_and_open_browser()
+    else:
+        asyncio.run(main())

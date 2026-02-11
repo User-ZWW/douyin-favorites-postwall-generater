@@ -1,0 +1,498 @@
+/* =========================================
+   抖音收藏海报墙 - 专用动画库
+   ========================================= */
+
+/* ========================================
+   CSS 变量 - 霓虹色彩系统
+   ======================================== */
+:root {
+    --neon-cyan: #00f3ff;
+    --neon-pink: #ff003c;
+    --neon-purple: #a855f7;
+    --neon-yellow: #fcee0a;
+    --neon-glow-cyan: 0 0 20px rgba(0, 243, 255, 0.6), 0 0 40px rgba(0, 243, 255, 0.3);
+    --neon-glow-pink: 0 0 20px rgba(255, 0, 60, 0.6), 0 0 40px rgba(255, 0, 60, 0.3);
+    --neon-glow-purple: 0 0 20px rgba(168, 85, 247, 0.6), 0 0 40px rgba(168, 85, 247, 0.3);
+}
+
+/* ========================================
+   滚动入场动画 - Intersection Observer
+   ======================================== */
+
+/* 基础 reveal 状态：隐藏 */
+.reveal {
+    opacity: 0;
+    transform: translateY(60px) scale(0.95);
+    transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    will-change: transform, opacity;
+}
+
+/* 激活状态：向上浮现 (下滑时触发) */
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* 向上滚动时的特效：从右侧弹跳进入 + 渐变 */
+.reveal.scroll-up {
+    opacity: 0;
+    transform: translateX(100px) scale(0.9);
+}
+
+.reveal.scroll-up.active {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    animation: bounce-in-right 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes bounce-in-right {
+    0% {
+        opacity: 0;
+        transform: translateX(100px) scale(0.9);
+    }
+
+    60% {
+        opacity: 0.8;
+        transform: translateX(-10px) scale(1.02);
+        /* 过冲效果 */
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* 从左侧入场 */
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-80px) rotate(-3deg);
+    transition: opacity 0.7s ease-out,
+        transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.reveal-left.active {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg);
+}
+
+/* 从右侧入场 */
+.reveal-right {
+    opacity: 0;
+    transform: translateX(80px) rotate(3deg);
+    transition: opacity 0.7s ease-out,
+        transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.reveal-right.active {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg);
+}
+
+/* 缩放入场 */
+.reveal-scale {
+    opacity: 0;
+    transform: scale(0.7);
+    transition: opacity 0.6s ease-out,
+        transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.reveal-scale.active {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* ========================================
+   错落动画延迟 (Stagger)
+   ======================================== */
+.stagger-1 {
+    transition-delay: 0.05s;
+}
+
+.stagger-2 {
+    transition-delay: 0.1s;
+}
+
+.stagger-3 {
+    transition-delay: 0.15s;
+}
+
+.stagger-4 {
+    transition-delay: 0.2s;
+}
+
+.stagger-5 {
+    transition-delay: 0.25s;
+}
+
+.stagger-6 {
+    transition-delay: 0.3s;
+}
+
+.stagger-7 {
+    transition-delay: 0.35s;
+}
+
+.stagger-8 {
+    transition-delay: 0.4s;
+}
+
+.stagger-9 {
+    transition-delay: 0.45s;
+}
+
+.stagger-10 {
+    transition-delay: 0.5s;
+}
+
+/* ========================================
+   霓虹发光效果
+   ======================================== */
+
+/* 霓虹脉动动画 */
+@keyframes neon-pulse {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 5px var(--neon-cyan),
+            0 0 10px var(--neon-cyan),
+            0 0 20px rgba(0, 243, 255, 0.5),
+            inset 0 0 15px rgba(0, 243, 255, 0.1);
+    }
+
+    50% {
+        box-shadow:
+            0 0 10px var(--neon-cyan),
+            0 0 25px var(--neon-cyan),
+            0 0 40px rgba(0, 243, 255, 0.6),
+            0 0 60px rgba(0, 243, 255, 0.3),
+            inset 0 0 20px rgba(0, 243, 255, 0.15);
+    }
+}
+
+/* 霓虹边框闪烁 */
+@keyframes neon-flicker {
+
+    0%,
+    19%,
+    21%,
+    23%,
+    25%,
+    54%,
+    56%,
+    100% {
+        opacity: 1;
+        box-shadow: var(--neon-glow-cyan);
+    }
+
+    20%,
+    24%,
+    55% {
+        opacity: 0.6;
+        box-shadow: none;
+    }
+}
+
+/* 双色霓虹渐变 */
+@keyframes neon-gradient-shift {
+
+    0%,
+    100% {
+        border-color: var(--neon-cyan);
+        box-shadow: var(--neon-glow-cyan);
+    }
+
+    50% {
+        border-color: var(--neon-pink);
+        box-shadow: var(--neon-glow-pink);
+    }
+}
+
+/* ========================================
+   卡片悬浮动画
+   ======================================== */
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes float-subtle {
+
+    0%,
+    100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+
+    25% {
+        transform: translateY(-4px) rotate(0.5deg);
+    }
+
+    75% {
+        transform: translateY(-2px) rotate(-0.5deg);
+    }
+}
+
+/* ========================================
+   扫描线效果
+   ======================================== */
+@keyframes scanline {
+    0% {
+        transform: translateY(-100%);
+    }
+
+    100% {
+        transform: translateY(100vh);
+    }
+}
+
+.scanline-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(to bottom,
+            transparent,
+            rgba(0, 243, 255, 0.15),
+            rgba(0, 243, 255, 0.3),
+            rgba(0, 243, 255, 0.15),
+            transparent);
+    animation: scanline 8s linear infinite;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.6;
+}
+
+/* CRT 扫描线纹理 */
+.crt-lines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 0, 0, 0.1) 2px,
+            rgba(0, 0, 0, 0.1) 4px);
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0.3;
+}
+
+/* ========================================
+   网格背景装饰
+   ======================================== */
+@keyframes grid-pulse {
+
+    0%,
+    100% {
+        opacity: 0.03;
+    }
+
+    50% {
+        opacity: 0.08;
+    }
+}
+
+.cyber-grid {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: -1;
+    animation: grid-pulse 4s ease-in-out infinite;
+}
+
+/* ========================================
+   增强版 Glitch 特效
+   ======================================== */
+@keyframes glitch-intense {
+    0% {
+        clip-path: polygon(0 2%, 100% 2%, 100% 5%, 0 5%);
+        transform: translate(-3px, 0);
+    }
+
+    10% {
+        clip-path: polygon(0 15%, 100% 15%, 100% 18%, 0 18%);
+        transform: translate(3px, 0);
+    }
+
+    20% {
+        clip-path: polygon(0 10%, 100% 10%, 100% 12%, 0 12%);
+        transform: translate(-2px, 0);
+    }
+
+    30% {
+        clip-path: polygon(0 1%, 100% 1%, 100% 2%, 0 2%);
+        transform: translate(2px, 0);
+    }
+
+    40% {
+        clip-path: polygon(0 33%, 100% 33%, 100% 35%, 0 35%);
+        transform: translate(-1px, 0);
+    }
+
+    50% {
+        clip-path: polygon(0 44%, 100% 44%, 100% 47%, 0 47%);
+        transform: translate(1px, 0);
+    }
+
+    60% {
+        clip-path: polygon(0 50%, 100% 50%, 100% 52%, 0 52%);
+        transform: translate(-2px, 0);
+    }
+
+    70% {
+        clip-path: polygon(0 70%, 100% 70%, 100% 73%, 0 73%);
+        transform: translate(3px, 0);
+    }
+
+    80% {
+        clip-path: polygon(0 80%, 100% 80%, 100% 81%, 0 81%);
+        transform: translate(-1px, 0);
+    }
+
+    90% {
+        clip-path: polygon(0 90%, 100% 90%, 100% 93%, 0 93%);
+        transform: translate(2px, 0);
+    }
+
+    100% {
+        clip-path: polygon(0 95%, 100% 95%, 100% 98%, 0 98%);
+        transform: translate(-3px, 0);
+    }
+}
+
+/* ========================================
+   加载动画增强
+   ======================================== */
+@keyframes loading-pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
+
+@keyframes loading-glow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 5px var(--neon-cyan);
+    }
+
+    50% {
+        box-shadow: 0 0 20px var(--neon-cyan), 0 0 40px var(--neon-cyan);
+    }
+}
+
+/* ========================================
+   回到顶部按钮增强
+   ======================================== */
+@keyframes bounce-up {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+.back-to-top.visible:hover {
+    animation: bounce-up 0.6s ease-in-out infinite;
+}
+
+/* ========================================
+   粒子飘浮效果
+   ======================================== */
+@keyframes particle-float {
+
+    0%,
+    100% {
+        transform: translateY(0) translateX(0) rotate(0deg);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(-100vh) translateX(20px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.particle {
+    position: fixed;
+    width: 4px;
+    height: 4px;
+    background: var(--neon-cyan);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: particle-float 15s linear infinite;
+    box-shadow: 0 0 10px var(--neon-cyan);
+}
+
+/* ========================================
+   响应式动画调整
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+
+    .reveal,
+    .reveal-left,
+    .reveal-right,
+    .reveal-scale {
+        transition: none;
+        opacity: 1;
+        transform: none;
+    }
+
+    .scanline-overlay,
+    .particle {
+        display: none;
+    }
+
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .reveal {
+        transform: translateY(40px) scale(0.98);
+    }
+
+    .scanline-overlay {
+        opacity: 0.3;
+    }
+}
